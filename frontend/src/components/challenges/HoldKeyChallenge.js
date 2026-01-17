@@ -5,10 +5,17 @@ function HoldKeyChallenge({ challenge, onVerify }) {
   const [duration, setDuration] = useState(0);
   const [completed, setCompleted] = useState(false);
   const intervalRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
+    // Focus the container to ensure key events are captured
+    if (containerRef.current) {
+      containerRef.current.focus();
+    }
+
     const handleKeyDown = (e) => {
-      if (e.code === 'Space' && !isHolding && !completed) {
+      // Check for spacebar (both 'Space' code and key === ' ')
+      if ((e.code === 'Space' || e.key === ' ' || e.keyCode === 32) && !isHolding && !completed) {
         e.preventDefault();
         setIsHolding(true);
         setDuration(0);
@@ -19,6 +26,7 @@ function HoldKeyChallenge({ challenge, onVerify }) {
             if (newDuration >= challenge.duration) {
               clearInterval(intervalRef.current);
               setCompleted(true);
+              setIsHolding(false);
               onVerify({ duration: newDuration });
               return newDuration;
             }
@@ -29,7 +37,7 @@ function HoldKeyChallenge({ challenge, onVerify }) {
     };
 
     const handleKeyUp = (e) => {
-      if (e.code === 'Space' && isHolding && !completed) {
+      if ((e.code === 'Space' || e.key === ' ' || e.keyCode === 32) && isHolding && !completed) {
         e.preventDefault();
         setIsHolding(false);
         if (intervalRef.current) {
@@ -38,12 +46,13 @@ function HoldKeyChallenge({ challenge, onVerify }) {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    // Use document instead of window for better event capture
+    document.addEventListener('keydown', handleKeyDown, true);
+    document.addEventListener('keyup', handleKeyUp, true);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      document.removeEventListener('keydown', handleKeyDown, true);
+      document.removeEventListener('keyup', handleKeyUp, true);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
@@ -53,12 +62,21 @@ function HoldKeyChallenge({ challenge, onVerify }) {
   const progress = Math.min((duration / challenge.duration) * 100, 100);
 
   return (
-    <div className="key-hold-container">
+    <div 
+      ref={containerRef}
+      className="key-hold-container"
+      tabIndex={0}
+      style={{ outline: 'none' }}
+      onFocus={(e) => e.target.focus()}
+    >
       <p style={{ marginBottom: '20px', fontSize: '16px' }}>
         Hold the <strong>SPACEBAR</strong> for {challenge.duration} seconds
       </p>
+      <p style={{ marginBottom: '20px', fontSize: '14px', color: '#666' }}>
+        (Click here first to focus, then hold spacebar)
+      </p>
       
-      <div className="key-hold-progress">
+      <div className="key-hold-progress" style={{ marginBottom: '20px' }}>
         <div
           className="key-hold-progress-bar"
           style={{ width: `${progress}%` }}
@@ -66,6 +84,12 @@ function HoldKeyChallenge({ challenge, onVerify }) {
           {completed ? 'Complete!' : `${duration.toFixed(1)}s / ${challenge.duration}s`}
         </div>
       </div>
+      
+      {isHolding && !completed && (
+        <div style={{ textAlign: 'center', color: '#4CAF50', fontWeight: 'bold' }}>
+          Holding spacebar...
+        </div>
+      )}
       
       {completed && (
         <div className="message success">

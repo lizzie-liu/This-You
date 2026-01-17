@@ -4,9 +4,81 @@ from rest_framework import status
 import random
 import uuid
 import json
+from datetime import datetime
 
 # In-memory storage for sessions (in production, use a database)
 sessions = {}
+
+# Lyrics database by decade (song, lyric with missing word(s), answer)
+LYRICS_BY_DECADE = {
+    2020: [
+        {'song': 'Blinding Lights', 'lyric': 'I been tryna call, I been on my own for long enough', 'missing': 'call', 'full_lyric': 'I been tryna call, I been on my own for long enough'},
+        {'song': 'Watermelon Sugar', 'lyric': 'Tastes like strawberries on a summer evenin\'', 'missing': 'strawberries', 'full_lyric': 'Tastes like strawberries on a summer evenin\''},
+    ],
+    2010: [
+        {'song': 'Someone Like You', 'lyric': 'Never mind, I\'ll find someone like you', 'missing': 'you', 'full_lyric': 'Never mind, I\'ll find someone like you'},
+        {'song': 'Rolling in the Deep', 'lyric': 'We could have had it all, rolling in the deep', 'missing': 'deep', 'full_lyric': 'We could have had it all, rolling in the deep'},
+        {'song': 'Call Me Maybe', 'lyric': 'Hey, I just met you, and this is crazy', 'missing': 'crazy', 'full_lyric': 'Hey, I just met you, and this is crazy'},
+    ],
+    2000: [
+        {'song': 'Hey Ya!', 'lyric': 'Shake it like a Polaroid picture', 'missing': 'Polaroid', 'full_lyric': 'Shake it like a Polaroid picture'},
+        {'song': 'I\'m a Believer', 'lyric': 'I thought love was only true in fairy tales', 'missing': 'fairy', 'full_lyric': 'I thought love was only true in fairy tales'},
+        {'song': 'Complicated', 'lyric': 'Why\'d you have to go and make things so complicated?', 'missing': 'complicated', 'full_lyric': 'Why\'d you have to go and make things so complicated?'},
+    ],
+    1990: [
+        {'song': 'Wonderwall', 'lyric': 'Today is gonna be the day that they\'re gonna throw it back to you', 'missing': 'day', 'full_lyric': 'Today is gonna be the day that they\'re gonna throw it back to you'},
+        {'song': 'Smells Like Teen Spirit', 'lyric': 'Here we are now, entertain us', 'missing': 'entertain', 'full_lyric': 'Here we are now, entertain us'},
+        {'song': 'I Will Always Love You', 'lyric': 'And I will always love you', 'missing': 'always', 'full_lyric': 'And I will always love you'},
+    ],
+    1980: [
+        {'song': 'Billie Jean', 'lyric': 'Billie Jean is not my lover', 'missing': 'lover', 'full_lyric': 'Billie Jean is not my lover'},
+        {'song': 'Sweet Dreams', 'lyric': 'Sweet dreams are made of this', 'missing': 'this', 'full_lyric': 'Sweet dreams are made of this'},
+        {'song': 'Take On Me', 'lyric': 'Take on me, take me on', 'missing': 'on', 'full_lyric': 'Take on me, take me on'},
+    ],
+    1970: [
+        {'song': 'Bohemian Rhapsody', 'lyric': 'Is this the real life? Is this just fantasy?', 'missing': 'fantasy', 'full_lyric': 'Is this the real life? Is this just fantasy?'},
+        {'song': 'Hotel California', 'lyric': 'Welcome to the Hotel California', 'missing': 'California', 'full_lyric': 'Welcome to the Hotel California'},
+        {'song': 'Stairway to Heaven', 'lyric': 'And she\'s buying a stairway to heaven', 'missing': 'heaven', 'full_lyric': 'And she\'s buying a stairway to heaven'},
+    ],
+    1960: [
+        {'song': 'Hey Jude', 'lyric': 'Hey Jude, don\'t be afraid', 'missing': 'afraid', 'full_lyric': 'Hey Jude, don\'t be afraid'},
+        {'song': 'Let It Be', 'lyric': 'Let it be, let it be', 'missing': 'be', 'full_lyric': 'Let it be, let it be'},
+        {'song': 'I Can\'t Get No Satisfaction', 'lyric': 'I can\'t get no satisfaction', 'missing': 'satisfaction', 'full_lyric': 'I can\'t get no satisfaction'},
+    ],
+}
+
+def get_birth_decade(age):
+    """Calculate birth decade from age"""
+    current_year = datetime.now().year
+    birth_year = current_year - int(age) if age else current_year - 25
+    # Round down to nearest decade
+    decade = (birth_year // 10) * 10
+    # Clamp to available decades
+    available_decades = sorted(LYRICS_BY_DECADE.keys())
+    if decade < min(available_decades):
+        return min(available_decades)
+    if decade > max(available_decades):
+        return max(available_decades)
+    # Find closest decade
+    closest = min(available_decades, key=lambda x: abs(x - decade))
+    return closest
+
+def get_lyric_challenge(birth_decade):
+    """Get a random lyric challenge for the given decade"""
+    if birth_decade not in LYRICS_BY_DECADE:
+        birth_decade = 2000  # Default
+    lyrics = LYRICS_BY_DECADE[birth_decade]
+    lyric_data = random.choice(lyrics)
+    
+    # Create lyric with missing word(s) - replace the missing word with blank
+    lyric_with_blank = lyric_data['lyric'].replace(lyric_data['missing'], '_____')
+    
+    return {
+        'song': lyric_data['song'],
+        'lyric': lyric_with_blank,
+        'answer': lyric_data['missing'].lower(),
+        'full_answer': lyric_data['missing'],
+    }
 
 # Challenge definitions
 CHALLENGES = {
@@ -38,16 +110,14 @@ CHALLENGES = {
             'id': 'draw_circle',
             'type': 'draw_circle',
             'title': 'Draw a perfect circle',
-            'description': 'Prove you are human by drawing a perfect circle in 3 seconds.',
-            'time_limit': 3,
+            'description': 'Prove you are human by drawing a perfect circle.',
         },
         {
-            'id': 'national_anthem',
+            'id': 'fill_lyrics',
             'type': 'fill_lyrics',
-            'title': 'Complete the national anthem',
-            'description': 'Please complete the following lyric from your national anthem.',
-            'lyric': 'O say can you see, by the dawn\'s early light,',
-            'answer': 'What so proudly we hailed at the twilight\'s last gleaming',
+            'title': 'Complete the lyric',
+            'description': 'Fill in the missing word(s) from a popular song from your birth decade.',
+            # Will be populated dynamically based on user's birth year
         },
         {
             'id': 'match_toaster',
@@ -133,10 +203,23 @@ def start_session(request):
         'confidence_level': 0,
     }
     
+    # Populate first challenge if it's fill_lyrics
+    first_challenge = challenge_sequence[0] if challenge_sequence else None
+    if first_challenge and first_challenge.get('type') == 'fill_lyrics':
+        user_age = user_info.get('age')
+        if user_age:
+            birth_decade = get_birth_decade(user_age)
+            lyric_challenge = get_lyric_challenge(birth_decade)
+            first_challenge['lyric'] = lyric_challenge['lyric']
+            first_challenge['song'] = lyric_challenge['song']
+            first_challenge['answer'] = lyric_challenge['answer']
+            first_challenge['full_answer'] = lyric_challenge['full_answer']
+            first_challenge['description'] = f'Fill in the missing word from "{lyric_challenge["song"]}" (a popular song from the {birth_decade}s).'
+    
     return Response({
         'session_id': session_id,
         'total_challenges': len(challenge_sequence),
-        'first_challenge': challenge_sequence[0] if challenge_sequence else None,
+        'first_challenge': first_challenge,
     }, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
@@ -153,7 +236,33 @@ def get_challenges(request):
     if current_idx >= len(session['challenges']):
         return Response({'error': 'All challenges completed'}, status=status.HTTP_400_BAD_REQUEST)
     
-    challenge = session['challenges'][current_idx]
+    challenge = session['challenges'][current_idx].copy()
+    
+    # Populate fill_lyrics challenge dynamically based on user's age
+    if challenge.get('type') == 'fill_lyrics' and not challenge.get('lyric'):
+        user_age = session['user_info'].get('age')
+        if user_age:
+            birth_decade = get_birth_decade(user_age)
+            lyric_challenge = get_lyric_challenge(birth_decade)
+            challenge['lyric'] = lyric_challenge['lyric']
+            challenge['song'] = lyric_challenge['song']
+            challenge['answer'] = lyric_challenge['answer']
+            challenge['full_answer'] = lyric_challenge['full_answer']
+            challenge['description'] = f'Fill in the missing word from "{lyric_challenge["song"]}" (a popular song from the {birth_decade}s).'
+            # Update the challenge in the session too
+            session['challenges'][current_idx].update(challenge)
+        else:
+            # Default if no age provided
+            birth_decade = 2000
+            lyric_challenge = get_lyric_challenge(birth_decade)
+            challenge['lyric'] = lyric_challenge['lyric']
+            challenge['song'] = lyric_challenge['song']
+            challenge['answer'] = lyric_challenge['answer']
+            challenge['full_answer'] = lyric_challenge['full_answer']
+            challenge['description'] = f'Fill in the missing word from "{lyric_challenge["song"]}" (a popular song from the {birth_decade}s).'
+            # Update the challenge in the session too
+            session['challenges'][current_idx].update(challenge)
+    
     return Response({
         'challenge': challenge,
         'challenge_number': current_idx + 1,
@@ -215,10 +324,14 @@ def verify_challenge(request):
         message = 'Circle verification complete. Shape analysis: inconclusive.' if success else 'Circle verification failed. Please attempt to draw a more circular circle.'
     
     elif challenge['type'] == 'fill_lyrics':
-        answer = attempt_data.get('answer', '').lower()
-        # Very lenient - any answer works
-        success = len(answer) > 5
-        message = 'Lyric completion accepted. Cultural verification: pending.'
+        answer = attempt_data.get('answer', '').lower().strip()
+        correct_answer = challenge.get('answer', '').lower().strip()
+        # Check if answer matches (case-insensitive, allow partial matches)
+        success = answer == correct_answer or correct_answer in answer or answer in correct_answer
+        if not success and len(answer) > 2:
+            # Very lenient fallback - any reasonable answer works
+            success = True
+        message = 'Lyric completion accepted. Cultural verification: pending.' if success else 'Incorrect answer. Please try again.'
     
     elif challenge['type'] == 'match_personality':
         # Any selection works

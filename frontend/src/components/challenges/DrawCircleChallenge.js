@@ -4,7 +4,6 @@ function DrawCircleChallenge({ challenge, onVerify }) {
   const canvasRef = useRef(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [usedPremade, setUsedPremade] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(challenge.time_limit || 3);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -15,14 +14,14 @@ function DrawCircleChallenge({ challenge, onVerify }) {
     ctx.lineWidth = 3;
   }, []);
 
-  useEffect(() => {
-    if (timeLeft > 0 && isDrawing) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && isDrawing) {
-      handleFinish();
-    }
-  }, [timeLeft, isDrawing]);
+  const clearCanvas = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setIsDrawing(false);
+    setUsedPremade(false);
+  };
 
   const startDrawing = (e) => {
     setIsDrawing(true);
@@ -84,11 +83,6 @@ function DrawCircleChallenge({ challenge, onVerify }) {
 
   return (
     <div>
-      {timeLeft > 0 && isDrawing && (
-        <div style={{ textAlign: 'center', marginBottom: '10px', fontWeight: 'bold', color: '#f44336' }}>
-          Time: {timeLeft}s
-        </div>
-      )}
       <div className="canvas-container">
         <canvas
           ref={canvasRef}
@@ -108,6 +102,13 @@ function DrawCircleChallenge({ challenge, onVerify }) {
           style={{ width: 'auto', margin: 0 }}
         >
           Finish Drawing
+        </button>
+        <button
+          type="button"
+          onClick={clearCanvas}
+          style={{ width: 'auto', margin: '0 10px', background: '#666' }}
+        >
+          Restart
         </button>
         <button
           type="button"
