@@ -150,9 +150,9 @@ CHALLENGES = {
         {
             'id': 'blink_camera',
             'type': 'blink_camera',
-            'title': 'Blink at the camera exactly 7 times',
+            'title': 'Blink at the camera once',
             'description': 'Please blink at your camera exactly 7 times to verify your humanity.',
-            'required_blinks': 7,
+            'required_blinks': 1,
         },
         {
             'id': 'say_this_is_me',
