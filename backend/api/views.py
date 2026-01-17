@@ -12,19 +12,6 @@ sessions = {}
 CHALLENGES = {
     'semi_serious': [
         {
-            'id': 'select_vibes',
-            'type': 'select_images',
-            'title': 'Select all images that contain vibes',
-            'description': 'Please identify all images containing vibes to proceed.',
-            'images': [
-                {'id': 1, 'url': '/api/static/vibe1.jpg', 'has_vibes': True},
-                {'id': 2, 'url': '/api/static/vibe2.jpg', 'has_vibes': True},
-                {'id': 3, 'url': '/api/static/notvibe1.jpg', 'has_vibes': False},
-                {'id': 4, 'url': '/api/static/vibe3.jpg', 'has_vibes': True},
-                {'id': 5, 'url': '/api/static/notvibe2.jpg', 'has_vibes': False},
-            ]
-        },
-        {
             'id': 'click_this_is_me',
             'type': 'button_click',
             'title': 'Click "This is me" button',
@@ -132,14 +119,11 @@ def start_session(request):
     session_id = str(uuid.uuid4())
     user_info = request.data.get('user_info', {})
     
-    # Select random challenges
+    # Include ALL challenges
     challenge_sequence = []
-    challenge_sequence.append(random.choice(CHALLENGES['semi_serious']))
-    challenge_sequence.append(random.choice(CHALLENGES['silly']))
-    challenge_sequence.append(random.choice(CHALLENGES['physical']))
-    # Add a few more random challenges
-    all_challenges = CHALLENGES['semi_serious'] + CHALLENGES['silly'] + CHALLENGES['physical']
-    challenge_sequence.extend(random.sample(all_challenges, min(2, len(all_challenges))))
+    challenge_sequence.extend(CHALLENGES['semi_serious'])
+    challenge_sequence.extend(CHALLENGES['silly'])
+    challenge_sequence.extend(CHALLENGES['physical'])
     
     sessions[session_id] = {
         'user_info': user_info,

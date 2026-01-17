@@ -120,6 +120,14 @@ function DrawCircleChallenge({ challenge, onVerify }) {
             borderRadius: '4px',
             cursor: 'pointer',
             fontWeight: 'bold',
+            opacity: 0,
+            transition: 'opacity 0.3s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.opacity = '1';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.opacity = '0';
           }}
         >
           Use Perfect Circle

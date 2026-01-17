@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-function UserInfoForm({ onSubmit }) {
+function UserInfoForm({ onSubmit, initialData }) {
   const [formData, setFormData] = useState({
     name: '',
     age: '',
@@ -10,6 +10,13 @@ function UserInfoForm({ onSubmit }) {
     favoriteFood: '',
     randomFact: '',
   });
+
+  // Load initial data if provided
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    }
+  }, [initialData]);
 
   const handleChange = (e) => {
     setFormData({
@@ -118,10 +125,6 @@ function UserInfoForm({ onSubmit }) {
       <button type="submit" className="button-primary">
         Verify It's You
       </button>
-
-      <div style={{ marginTop: '20px', fontSize: '12px', color: '#666', fontStyle: 'italic' }}>
-        * Required fields. All information is used for verification purposes only and is not stored permanently.
-      </div>
     </form>
   );
 }

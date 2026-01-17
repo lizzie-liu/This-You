@@ -1,18 +1,19 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 
 function ButtonClickChallenge({ challenge, onVerify }) {
-  const [clicked, setClicked] = useState(false);
-
-  const handleClick = () => {
-    setClicked(true);
-    onVerify({ clicked: true });
-  };
+  // Auto-verify immediately when component mounts
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onVerify({ clicked: true });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [onVerify]);
 
   return (
     <div>
-      <button className="button-primary" onClick={handleClick} disabled={clicked}>
-        {clicked ? 'Identity Confirmed' : 'This is me'}
-      </button>
+      <div style={{ textAlign: 'center', padding: '20px' }}>
+        <p>Verifying your identity...</p>
+      </div>
     </div>
   );
 }
