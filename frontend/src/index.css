@@ -1,0 +1,480 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', 'Helvetica', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+#root {
+  width: 100%;
+  max-width: 800px;
+}
+
+/* 2000s-style UI */
+.verification-container {
+  background: #ffffff;
+  border: 3px solid #333333;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #333;
+  padding-bottom: 20px;
+}
+
+.header h1 {
+  color: #333;
+  font-size: 28px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.header .subtitle {
+  color: #666;
+  font-size: 14px;
+  font-style: italic;
+}
+
+.progress-bar-container {
+  margin: 20px 0;
+  background: #e0e0e0;
+  border: 2px solid #333;
+  border-radius: 4px;
+  height: 30px;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%);
+  transition: width 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.progress-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #333;
+  font-weight: bold;
+  font-size: 12px;
+  z-index: 1;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #333;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'Arial', sans-serif;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.button-primary {
+  background: linear-gradient(180deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+  border: 2px solid #333;
+  padding: 15px 40px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  margin-top: 20px;
+}
+
+.button-primary:hover {
+  background: linear-gradient(180deg, #45a049 0%, #3d8b40 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
+}
+
+.button-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.button-primary:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.challenge-container {
+  margin: 30px 0;
+  padding: 20px;
+  background: #f9f9f9;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+}
+
+.challenge-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.challenge-description {
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.challenge-number {
+  color: #999;
+  font-size: 12px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.message {
+  padding: 15px;
+  margin: 20px 0;
+  border-radius: 4px;
+  border: 2px solid;
+  font-size: 14px;
+}
+
+.message.success {
+  background: #d4edda;
+  border-color: #4CAF50;
+  color: #155724;
+}
+
+.message.error {
+  background: #f8d7da;
+  border-color: #dc3545;
+  color: #721c24;
+}
+
+.message.info {
+  background: #d1ecf1;
+  border-color: #0c5460;
+  color: #0c5460;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.image-item {
+  position: relative;
+  cursor: pointer;
+  border: 3px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.image-item:hover {
+  border-color: #4CAF50;
+  transform: scale(1.05);
+}
+
+.image-item.selected {
+  border-color: #4CAF50;
+  background: #d4edda;
+}
+
+.image-item img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 150px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 24px;
+}
+
+.canvas-container {
+  border: 2px solid #333;
+  border-radius: 4px;
+  margin: 20px 0;
+  background: white;
+  position: relative;
+}
+
+.canvas-container canvas {
+  display: block;
+  cursor: crosshair;
+}
+
+.canvas-controls {
+  padding: 10px;
+  background: #f9f9f9;
+  border-top: 2px solid #ddd;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.toaster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.toaster-item {
+  padding: 15px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.toaster-item:hover {
+  border-color: #4CAF50;
+  transform: scale(1.05);
+}
+
+.toaster-item.selected {
+  border-color: #4CAF50;
+  background: #d4edda;
+}
+
+.sound-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.sound-item {
+  padding: 15px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  font-weight: bold;
+}
+
+.sound-item:hover {
+  border-color: #4CAF50;
+  transform: scale(1.05);
+}
+
+.sound-item.selected {
+  border-color: #4CAF50;
+  background: #d4edda;
+}
+
+.moving-button {
+  position: relative;
+  margin: 20px 0;
+}
+
+.verdict-container {
+  text-align: center;
+  padding: 40px;
+}
+
+.verdict-title {
+  font-size: 36px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.verdict-title.verified {
+  color: #4CAF50;
+}
+
+.verdict-title.probably {
+  color: #FF9800;
+}
+
+.verdict-title.suspicious {
+  color: #FF5722;
+}
+
+.verdict-title.not-you {
+  color: #f44336;
+}
+
+.verdict-subtitle {
+  font-size: 20px;
+  color: #666;
+  margin-bottom: 30px;
+  font-style: italic;
+}
+
+.verdict-stats {
+  background: #f9f9f9;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.verdict-stats p {
+  margin: 10px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+}
+
+.camera-container {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.camera-container video {
+  border: 2px solid #333;
+  border-radius: 4px;
+  max-width: 100%;
+  background: #000;
+}
+
+.blink-counter {
+  margin: 20px 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+}
+
+.voice-container {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.voice-status {
+  padding: 15px;
+  background: #f9f9f9;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  margin: 20px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.key-hold-container {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.key-hold-progress {
+  margin: 20px 0;
+  height: 40px;
+  background: #e0e0e0;
+  border: 2px solid #333;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.key-hold-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%);
+  transition: width 0.1s linear;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.typing-container {
+  margin: 20px 0;
+}
+
+.typing-input {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid #333;
+  border-radius: 4px;
+  font-size: 18px;
+  font-family: 'Courier New', monospace;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.typing-hint {
+  margin-top: 10px;
+  color: #666;
+  font-size: 12px;
+  text-align: center;
+}
