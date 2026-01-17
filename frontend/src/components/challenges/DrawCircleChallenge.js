@@ -23,21 +23,35 @@ function DrawCircleChallenge({ challenge, onVerify }) {
     setUsedPremade(false);
   };
 
+  const getCanvasCoordinates = (e) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
+  };
+
   const startDrawing = (e) => {
     setIsDrawing(true);
     const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    const coords = getCanvasCoordinates(e);
     ctx.beginPath();
-    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    ctx.moveTo(coords.x, coords.y);
   };
 
   const draw = (e) => {
     if (!isDrawing) return;
     const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    const coords = getCanvasCoordinates(e);
+    ctx.lineTo(coords.x, coords.y);
     ctx.stroke();
   };
 
@@ -83,15 +97,43 @@ function DrawCircleChallenge({ challenge, onVerify }) {
 
   return (
     <div>
-      <div className="canvas-container">
+      <div className="canvas-container" style={{ display: 'inline-block', maxWidth: '100%' }}>
         <canvas
           ref={canvasRef}
           width={400}
           height={400}
+          style={{ 
+            width: '100%', 
+            maxWidth: '400px', 
+            height: 'auto',
+            touchAction: 'none' 
+          }}
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
           onMouseLeave={stopDrawing}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+              clientX: touch.clientX,
+              clientY: touch.clientY
+            });
+            startDrawing(mouseEvent);
+          }}
+          onTouchMove={(e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+              clientX: touch.clientX,
+              clientY: touch.clientY
+            });
+            draw(mouseEvent);
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            stopDrawing();
+          }}
         />
       </div>
       <div className="canvas-controls">

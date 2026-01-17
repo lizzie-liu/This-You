@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function SelectSoundChallenge({ challenge, onVerify }) {
   const [selected, setSelected] = useState(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  useEffect(() => {
+    if (!challenge.sounds) {
+      console.warn('SelectSoundChallenge: Missing sounds data', challenge);
+    }
+  }, [challenge]);
 
   const handleSelect = (soundId) => {
+    if (isVerifying) return; // Prevent double submissions
+    
     setSelected(soundId);
+    setIsVerifying(true);
     onVerify({ sound_id: soundId });
   };
+
+  if (!challenge.sounds || !Array.isArray(challenge.sounds)) {
+    return (
+      <div>
+        <p>Loading challenge...</p>
+      </div>
+    );
+  }
 
   return (
     <div>

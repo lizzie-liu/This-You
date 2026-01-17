@@ -1,12 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function MatchToasterChallenge({ challenge, onVerify }) {
   const [selected, setSelected] = useState(null);
+
+  useEffect(() => {
+    if (!challenge.toasters) {
+      console.warn('MatchToasterChallenge: Missing toasters data', challenge);
+    }
+  }, [challenge]);
 
   const handleSelect = (toasterId) => {
     setSelected(toasterId);
     onVerify({ toaster_id: toasterId });
   };
+
+  if (!challenge.toasters || !Array.isArray(challenge.toasters)) {
+    return (
+      <div>
+        <p>Loading challenge...</p>
+      </div>
+    );
+  }
 
   return (
     <div>

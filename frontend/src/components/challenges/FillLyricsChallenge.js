@@ -1,12 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function FillLyricsChallenge({ challenge, onVerify }) {
   const [answer, setAnswer] = useState('');
 
+  useEffect(() => {
+    // Log challenge data for debugging
+    if (!challenge.lyric) {
+      console.warn('FillLyricsChallenge: Missing lyric data', challenge);
+    }
+  }, [challenge]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!challenge.lyric) {
+      alert('Challenge data is loading. Please wait...');
+      return;
+    }
     onVerify({ answer });
   };
+
+  if (!challenge.lyric) {
+    return (
+      <div>
+        <p>Loading challenge...</p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit}>

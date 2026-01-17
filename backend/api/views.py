@@ -124,12 +124,8 @@ CHALLENGES = {
             'type': 'match_personality',
             'title': 'Match your personality to a toaster',
             'description': 'Select the toaster that best matches your personality.',
-            'toasters': [
-                {'id': 1, 'name': 'Classic White', 'personality': 'Traditional'},
-                {'id': 2, 'name': 'Stainless Steel', 'personality': 'Modern'},
-                {'id': 3, 'name': 'Retro Red', 'personality': 'Bold'},
-                {'id': 4, 'name': 'Smart Toaster', 'personality': 'Tech-savvy'},
-            ]
+            # Will be populated dynamically with all personality options
+            'toasters': []
         },
         {
             'id': 'funniest_sound',
@@ -203,18 +199,44 @@ def start_session(request):
         'confidence_level': 0,
     }
     
-    # Populate first challenge if it's fill_lyrics
+    # Populate first challenge if it needs dynamic data
     first_challenge = challenge_sequence[0] if challenge_sequence else None
-    if first_challenge and first_challenge.get('type') == 'fill_lyrics':
-        user_age = user_info.get('age')
-        if user_age:
-            birth_decade = get_birth_decade(user_age)
-            lyric_challenge = get_lyric_challenge(birth_decade)
-            first_challenge['lyric'] = lyric_challenge['lyric']
-            first_challenge['song'] = lyric_challenge['song']
-            first_challenge['answer'] = lyric_challenge['answer']
-            first_challenge['full_answer'] = lyric_challenge['full_answer']
-            first_challenge['description'] = f'Fill in the missing word from "{lyric_challenge["song"]}" (a popular song from the {birth_decade}s).'
+    if first_challenge:
+        # Populate match_personality challenge
+        if first_challenge.get('type') == 'match_personality':
+            user_personality = user_info.get('personality', '')
+            all_personalities = ['Traditional', 'Modern', 'Bold', 'Tech-savvy', 'Quirky', 'Mysterious']
+            toaster_names = {
+                'Traditional': 'Classic White',
+                'Modern': 'Stainless Steel',
+                'Bold': 'Retro Red',
+                'Tech-savvy': 'Smart Toaster',
+                'Quirky': 'Rainbow Toaster',
+                'Mysterious': 'Black Toaster'
+            }
+            
+            toasters = []
+            for idx, personality in enumerate(all_personalities, 1):
+                toasters.append({
+                    'id': idx,
+                    'name': toaster_names.get(personality, personality + ' Toaster'),
+                    'personality': personality
+                })
+            
+            first_challenge['toasters'] = toasters
+            first_challenge['correct_personality'] = user_personality
+        
+        # Populate fill_lyrics challenge
+        elif first_challenge.get('type') == 'fill_lyrics':
+            user_age = user_info.get('age')
+            if user_age:
+                birth_decade = get_birth_decade(user_age)
+                lyric_challenge = get_lyric_challenge(birth_decade)
+                first_challenge['lyric'] = lyric_challenge['lyric']
+                first_challenge['song'] = lyric_challenge['song']
+                first_challenge['answer'] = lyric_challenge['answer']
+                first_challenge['full_answer'] = lyric_challenge['full_answer']
+                first_challenge['description'] = f'Fill in the missing word from "{lyric_challenge["song"]}" (a popular song from the {birth_decade}s).'
     
     return Response({
         'session_id': session_id,
@@ -237,6 +259,32 @@ def get_challenges(request):
         return Response({'error': 'All challenges completed'}, status=status.HTTP_400_BAD_REQUEST)
     
     challenge = session['challenges'][current_idx].copy()
+    
+    # Populate match_personality challenge dynamically with all personality options
+    if challenge.get('type') == 'match_personality' and (not challenge.get('toasters') or len(challenge.get('toasters', [])) == 0):
+        user_personality = session['user_info'].get('personality', '')
+        # All personality options from the form
+        all_personalities = ['Traditional', 'Modern', 'Bold', 'Tech-savvy', 'Quirky', 'Mysterious']
+        toaster_names = {
+            'Traditional': 'Classic White',
+            'Modern': 'Stainless Steel',
+            'Bold': 'Retro Red',
+            'Tech-savvy': 'Smart Toaster',
+            'Quirky': 'Rainbow Toaster',
+            'Mysterious': 'Black Toaster'
+        }
+        
+        toasters = []
+        for idx, personality in enumerate(all_personalities, 1):
+            toasters.append({
+                'id': idx,
+                'name': toaster_names.get(personality, personality + ' Toaster'),
+                'personality': personality
+            })
+        
+        challenge['toasters'] = toasters
+        challenge['correct_personality'] = user_personality  # Store the correct answer
+        session['challenges'][current_idx].update(challenge)
     
     # Populate fill_lyrics challenge dynamically based on user's age
     if challenge.get('type') == 'fill_lyrics' and not challenge.get('lyric'):
@@ -301,13 +349,20 @@ def verify_challenge(request):
         message = 'Button click registered. Identity confirmed with moderate certainty.'
     
     elif challenge['type'] == 'text_input':
-        user_name = session['user_info'].get('name', '').lower()
-        entered_name = attempt_data.get('text', '').lower()
+        user_name = session['user_info'].get('name', '').lower().strip()
+        entered_name = attempt_data.get('text', '').lower().strip()
         attempts = attempt_data.get('attempts', 1)
         
         if challenge.get('attempts_required', 1) == 2:
-            success = attempts >= 2  # Succeeds on second attempt regardless
-            message = 'Name verification successful. Please proceed.' if success else 'Please try again. System requires additional verification.'
+            # Succeeds if name matches OR on second attempt
+            name_matches = user_name == entered_name
+            success = name_matches or attempts >= 2
+            if name_matches:
+                message = 'Name verification successful. Please proceed.'
+            elif attempts >= 2:
+                message = 'Name verification complete. Proceeding with caution.'
+            else:
+                message = 'Please try again. System requires additional verification.'
         else:
             success = user_name == entered_name
             message = 'Name verified.' if success else 'Name mismatch detected.'
@@ -334,9 +389,23 @@ def verify_challenge(request):
         message = 'Lyric completion accepted. Cultural verification: pending.' if success else 'Incorrect answer. Please try again.'
     
     elif challenge['type'] == 'match_personality':
-        # Any selection works
-        success = attempt_data.get('toaster_id') is not None
-        message = 'Personality-to-toaster matching complete. Compatibility: questionable.'
+        selected_toaster_id = attempt_data.get('toaster_id')
+        correct_personality = challenge.get('correct_personality', '').lower()
+        
+        # Find the selected toaster
+        selected_toaster = None
+        for toaster in challenge.get('toasters', []):
+            if toaster['id'] == selected_toaster_id:
+                selected_toaster = toaster
+                break
+        
+        if selected_toaster:
+            selected_personality = selected_toaster.get('personality', '').lower()
+            success = selected_personality == correct_personality
+            message = 'Personality-to-toaster matching complete. Compatibility: questionable.' if success else 'Personality mismatch detected. Please try again.'
+        else:
+            success = False
+            message = 'Invalid selection. Please try again.'
     
     elif challenge['type'] == 'select_sound':
         # Any sound selection works
@@ -387,7 +456,57 @@ def verify_challenge(request):
     
     next_challenge = None
     if session['current_challenge'] < len(session['challenges']):
-        next_challenge = session['challenges'][session['current_challenge']]
+        next_challenge = session['challenges'][session['current_challenge']].copy()
+        
+        # Populate match_personality challenge if needed
+        if next_challenge.get('type') == 'match_personality' and (not next_challenge.get('toasters') or len(next_challenge.get('toasters', [])) == 0):
+            user_personality = session['user_info'].get('personality', '')
+            all_personalities = ['Traditional', 'Modern', 'Bold', 'Tech-savvy', 'Quirky', 'Mysterious']
+            toaster_names = {
+                'Traditional': 'Classic White',
+                'Modern': 'Stainless Steel',
+                'Bold': 'Retro Red',
+                'Tech-savvy': 'Smart Toaster',
+                'Quirky': 'Rainbow Toaster',
+                'Mysterious': 'Black Toaster'
+            }
+            
+            toasters = []
+            for idx, personality in enumerate(all_personalities, 1):
+                toasters.append({
+                    'id': idx,
+                    'name': toaster_names.get(personality, personality + ' Toaster'),
+                    'personality': personality
+                })
+            
+            next_challenge['toasters'] = toasters
+            next_challenge['correct_personality'] = user_personality
+            session['challenges'][session['current_challenge']].update(next_challenge)
+        
+        # Populate fill_lyrics challenge if needed
+        if next_challenge.get('type') == 'fill_lyrics' and not next_challenge.get('lyric'):
+            user_age = session['user_info'].get('age')
+            if user_age:
+                birth_decade = get_birth_decade(user_age)
+                lyric_challenge = get_lyric_challenge(birth_decade)
+                next_challenge['lyric'] = lyric_challenge['lyric']
+                next_challenge['song'] = lyric_challenge['song']
+                next_challenge['answer'] = lyric_challenge['answer']
+                next_challenge['full_answer'] = lyric_challenge['full_answer']
+                next_challenge['description'] = f'Fill in the missing word from "{lyric_challenge["song"]}" (a popular song from the {birth_decade}s).'
+                # Update the challenge in the session too
+                session['challenges'][session['current_challenge']].update(next_challenge)
+            else:
+                # Default if no age provided
+                birth_decade = 2000
+                lyric_challenge = get_lyric_challenge(birth_decade)
+                next_challenge['lyric'] = lyric_challenge['lyric']
+                next_challenge['song'] = lyric_challenge['song']
+                next_challenge['answer'] = lyric_challenge['answer']
+                next_challenge['full_answer'] = lyric_challenge['full_answer']
+                next_challenge['description'] = f'Fill in the missing word from "{lyric_challenge["song"]}" (a popular song from the {birth_decade}s).'
+                # Update the challenge in the session too
+                session['challenges'][session['current_challenge']].update(next_challenge)
     
     return Response({
         'success': success,
