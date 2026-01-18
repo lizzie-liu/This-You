@@ -32,6 +32,7 @@ function HoldKeyChallenge({ challenge, onVerify }) {
           // Prevent page scroll only if not in an input field
           if (!isInInput) {
             e.preventDefault();
+            e.stopPropagation(); // Stop event from bubbling
           }
           
           // Start holding if not already holding and not completed, and we're in this container
@@ -48,7 +49,10 @@ function HoldKeyChallenge({ challenge, onVerify }) {
                   setIsHolding(false);
                   completedRef.current = true;
                   isHoldingRef.current = false;
-                  onVerify({ duration: newDuration });
+                  // Add delay before calling onVerify to allow key release
+                  setTimeout(() => {
+                    onVerify({ duration: newDuration });
+                  }, 300);
                   return newDuration;
                 }
                 return newDuration;
@@ -67,6 +71,7 @@ function HoldKeyChallenge({ challenge, onVerify }) {
         if (isInThisContainer || (!isInInput && !isInThisContainer)) {
           if (!isInInput) {
             e.preventDefault();
+            e.stopPropagation(); // Stop event from bubbling
           }
           
           if (isInThisContainer && isHoldingRef.current && !completedRef.current) {
