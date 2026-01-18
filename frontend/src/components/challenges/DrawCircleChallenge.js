@@ -147,8 +147,16 @@ function DrawCircleChallenge({ challenge, onVerify }) {
         </button>
         <button
           type="button"
+          style={{
+            padding: '10px 20px',
+            background: 'blue',
+            color: 'white',
+            border: '2px solid #333',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+          }}
           onClick={clearCanvas}
-          style={{ width: 'auto', margin: '0 10px', background: '#666' }}
         >
           Restart
         </button>
